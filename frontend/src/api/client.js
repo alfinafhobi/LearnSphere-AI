@@ -1,8 +1,10 @@
-const API_BASE_URL = "http://localhost:8000/api/v1";
+
+const API_BASE_URL = `${import.meta.env.VITE_API_URL || "https://learnsphere-ai-2tme.onrender.com"}/api/v1`;
+
 
 export async function apiFetch(endpoint, options = {}) {
   const token = localStorage.getItem("learnsphere_token");
-  
+
   const headers = {
     "Content-Type": "application/json",
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -42,9 +44,9 @@ export const api = {
   },
   assessment: {
     start: (subjectId) => apiFetch("/assessment/start", { method: "POST", body: JSON.stringify({ subject_id: subjectId }) }),
-    submit: (assessmentId, answers) => apiFetch("/assessment/submit", { 
-      method: "POST", 
-      body: JSON.stringify({ assessment_id: assessmentId, answers }) 
+    submit: (assessmentId, answers) => apiFetch("/assessment/submit", {
+      method: "POST",
+      body: JSON.stringify({ assessment_id: assessmentId, answers })
     }),
   },
   studyPlans: {
