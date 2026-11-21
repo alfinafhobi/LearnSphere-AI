@@ -1,5 +1,7 @@
+
 import os
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -18,20 +20,23 @@ from .routers import (
     profile_router
 )
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Initialize DB schema
     Base.metadata.create_all(bind=engine)
-    
+
     # Run seed data
     db = SessionLocal()
     try:
         seed_database(db)
     finally:
         db.close()
-        
+
     yield
 
+
+# Initialize FastAPI application
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
@@ -39,17 +44,24 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# Enable CORS for frontend Vite dev server & production builds
+
+# Enable CORS for local development and Vercel deployment
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins for local review
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "https://learn-sphere-ai-two.vercel.app"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+
 # Include all API v1 routes
 prefix = settings.API_V1_STR
+
 app.include_router(auth_router, prefix=prefix)
 app.include_router(subjects_router, prefix=prefix)
 app.include_router(assessment_router, prefix=prefix)
@@ -60,6 +72,8 @@ app.include_router(analytics_router, prefix=prefix)
 app.include_router(agents_router, prefix=prefix)
 app.include_router(profile_router, prefix=prefix)
 
+
+# Health check endpoint
 @app.get("/health")
 def health_check():
     return {
@@ -67,9 +81,14 @@ def health_check():
         "app": settings.PROJECT_NAME,
         "version": settings.VERSION,
         "demo_mode": settings.DEMO_MODE,
-        "gemini_api_configured": bool(os.environ.get("GEMINI_API_KEY") or settings.GEMINI_API_KEY)
+        "gemini_api_configured": bool(
+            os.environ.get("GEMINI_API_KEY")
+            or settings.GEMINI_API_KEY
+        )
     }
 
+
+# Root endpoint
 @app.get("/")
 def root():
     return {
@@ -77,3 +96,4 @@ def root():
         "documentation": "/docs",
         "health": "/health"
     }
+
